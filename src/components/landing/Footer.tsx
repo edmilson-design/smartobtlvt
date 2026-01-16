@@ -1,5 +1,6 @@
-import { Plane, Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import logoLvt from "@/assets/logo-lvt.png";
 
 export const Footer = () => {
   return (
@@ -9,10 +10,7 @@ export const Footer = () => {
           {/* Logo & Description */}
           <div className="md:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Plane className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <span className="font-bold text-xl">TravelCorp</span>
+              <img src={logoLvt} alt="LVT Viagens" className="h-10 w-auto brightness-0 invert" />
             </Link>
             <p className="text-background/70 mb-4">
               Sua parceira em viagens corporativas. Tecnologia e atendimento personalizado 
