@@ -14,16 +14,198 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          airline: string | null
+          approved_at: string | null
+          approved_by: string | null
+          arrival_time: string | null
+          booking_type: Database["public"]["Enums"]["booking_type"]
+          cabin_class: string | null
+          car_category: string | null
+          car_company: string | null
+          check_in_time: string | null
+          check_out_time: string | null
+          confirmation_code: string | null
+          created_at: string
+          currency: string | null
+          departure_time: string | null
+          destination: string
+          dropoff_location: string | null
+          end_date: string | null
+          flight_number: string | null
+          hotel_name: string | null
+          id: string
+          notes: string | null
+          origin: string | null
+          pickup_location: string | null
+          rejection_reason: string | null
+          requires_approval: boolean | null
+          room_type: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["booking_status"]
+          total_cost: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          airline?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          arrival_time?: string | null
+          booking_type: Database["public"]["Enums"]["booking_type"]
+          cabin_class?: string | null
+          car_category?: string | null
+          car_company?: string | null
+          check_in_time?: string | null
+          check_out_time?: string | null
+          confirmation_code?: string | null
+          created_at?: string
+          currency?: string | null
+          departure_time?: string | null
+          destination: string
+          dropoff_location?: string | null
+          end_date?: string | null
+          flight_number?: string | null
+          hotel_name?: string | null
+          id?: string
+          notes?: string | null
+          origin?: string | null
+          pickup_location?: string | null
+          rejection_reason?: string | null
+          requires_approval?: boolean | null
+          room_type?: string | null
+          start_date: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          total_cost: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          airline?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          arrival_time?: string | null
+          booking_type?: Database["public"]["Enums"]["booking_type"]
+          cabin_class?: string | null
+          car_category?: string | null
+          car_company?: string | null
+          check_in_time?: string | null
+          check_out_time?: string | null
+          confirmation_code?: string | null
+          created_at?: string
+          currency?: string | null
+          departure_time?: string | null
+          destination?: string
+          dropoff_location?: string | null
+          end_date?: string | null
+          flight_number?: string | null
+          hotel_name?: string | null
+          id?: string
+          notes?: string | null
+          origin?: string | null
+          pickup_location?: string | null
+          rejection_reason?: string | null
+          requires_approval?: boolean | null
+          room_type?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          total_cost?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          approval_limit: number | null
+          company_name: string | null
+          cost_center: string | null
+          created_at: string
+          department: string | null
+          email: string
+          full_name: string
+          id: string
+          manager_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          approval_limit?: number | null
+          company_name?: string | null
+          cost_center?: string | null
+          created_at?: string
+          department?: string | null
+          email: string
+          full_name: string
+          id: string
+          manager_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approval_limit?: number | null
+          company_name?: string | null
+          cost_center?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          manager_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_manager_id: { Args: { _user_id: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: never; Returns: boolean }
+      is_manager_or_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "employee" | "manager" | "admin"
+      booking_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "confirmed"
+        | "cancelled"
+      booking_type: "flight" | "hotel" | "car_rental"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +332,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["employee", "manager", "admin"],
+      booking_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "confirmed",
+        "cancelled",
+      ],
+      booking_type: ["flight", "hotel", "car_rental"],
+    },
   },
 } as const
