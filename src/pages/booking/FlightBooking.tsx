@@ -49,7 +49,7 @@ export default function FlightBooking() {
     }
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!origin || !destination || !departureDate) {
       toast({
         variant: 'destructive',
@@ -61,25 +61,61 @@ export default function FlightBooking() {
 
     setSearching(true);
     
-    // Simulate API delay
-    setTimeout(() => {
+    try {
+      // Try real API first
+      const { data, error } = await supabase.functions.invoke('search-flights', {
+        body: {
+          origin,
+          destination,
+          departureDate,
+          adults: parseInt(passengers),
+          cabinClass: cabinClass === 'Econômica' ? 'ECONOMY' : cabinClass === 'Executiva' ? 'BUSINESS' : 'ALL',
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.flights?.length > 0) {
+        // Use real API results
+        const filtered = cabinClass === 'Todas' 
+          ? data.flights 
+          : data.flights.filter((f: Flight) => f.cabinClass === cabinClass);
+        
+        setFlights(filtered);
+        
+        toast({
+          title: 'Resultados reais',
+          description: `${filtered.length} voos encontrados via RexturAdvance`,
+        });
+      } else {
+        // Fallback to mock data
+        console.warn('Falling back to mock data:', data?.error);
+        const results = generateMockFlights(origin, destination, departureDate);
+        const filtered = cabinClass === 'Todas' 
+          ? results 
+          : results.filter(f => f.cabinClass === cabinClass);
+        
+        setFlights(filtered);
+        
+        if (filtered.length === 0) {
+          toast({
+            title: 'Nenhum voo encontrado',
+            description: 'Tente alterar os filtros de busca',
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Search error:', err);
+      // Fallback to mock data on error
       const results = generateMockFlights(origin, destination, departureDate);
-      
-      // Filter by cabin class
       const filtered = cabinClass === 'Todas' 
         ? results 
         : results.filter(f => f.cabinClass === cabinClass);
       
       setFlights(filtered);
+    } finally {
       setSearching(false);
-
-      if (filtered.length === 0) {
-        toast({
-          title: 'Nenhum voo encontrado',
-          description: 'Tente alterar os filtros de busca',
-        });
-      }
-    }, 1500);
+    }
   };
 
   const handleBookFlight = async (flight: Flight) => {
