@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface FlightSearchRequest {
@@ -30,46 +30,32 @@ interface FlightOffer {
   price: number;
   currency: string;
   stops: number;
-  segments?: FlightSegment[];
 }
 
-interface FlightSegment {
-  departure: string;
-  arrival: string;
-  departureTime: string;
-  arrivalTime: string;
-  flightNumber: string;
-  airline: string;
-  duration: string;
-}
+// Travellink API (Wooba/BeFly) - Sandbox
+const TRAVELLINK_BASE_URL = 'https://wooba-sandbox-api.travellink.com.br/wcfTravellinkJson/AereoNoSession.svc';
 
-// Airline logos mapping
+const airlineNames: Record<string, string> = {
+  'LA': 'LATAM', 'JJ': 'LATAM', 'G3': 'GOL', 'AD': 'Azul',
+  'AV': 'Avianca', 'AA': 'American Airlines', 'UA': 'United', 'DL': 'Delta',
+};
+
 const airlineLogos: Record<string, string> = {
-  'LA': '🔴', // LATAM
-  'G3': '🟠', // GOL
-  'AD': '🔵', // Azul
-  'AV': '🔴', // Avianca
-  'AA': '🔵', // American
-  'UA': '🔵', // United
-  'DL': '🔴', // Delta
+  'LA': '🔴', 'JJ': '🔴', 'G3': '🟠', 'AD': '🔵',
+  'AV': '🔴', 'AA': '🔵', 'UA': '🔵', 'DL': '🔴',
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const REXTUR_API_KEY = Deno.env.get('REXTUR_API_KEY');
-    const REXTUR_API_SECRET = Deno.env.get('REXTUR_API_SECRET');
+    const API_LOGIN = Deno.env.get('REXTUR_API_KEY');
+    const API_PASSWORD = Deno.env.get('REXTUR_API_SECRET');
 
-    if (!REXTUR_API_KEY) {
-      throw new Error('REXTUR_API_KEY is not configured');
-    }
-
-    if (!REXTUR_API_SECRET) {
-      throw new Error('REXTUR_API_SECRET is not configured');
+    if (!API_LOGIN || !API_PASSWORD) {
+      throw new Error('API credentials not configured');
     }
 
     const body: FlightSearchRequest = await req.json();
@@ -84,61 +70,99 @@ serve(async (req) => {
 
     console.log(`Searching flights: ${origin} -> ${destination} on ${departureDate}`);
 
-    // ============================================================
-    // REXTUR ADVANCE API INTEGRATION
-    // ============================================================
-    // NOTE: Replace the URL and request format below with the actual
-    // RexturAdvance API documentation. This is a generic structure.
-    // ============================================================
-    
-    const REXTUR_API_URL = 'https://api.rexturadvance.com.br'; // Replace with actual URL
-    
-    // Build authentication - adjust based on RexturAdvance auth method
-    const authToken = btoa(`${REXTUR_API_KEY}:${REXTUR_API_SECRET}`);
-    
-    // Build search request - adjust based on RexturAdvance API format
-    const searchPayload = {
-      // Adjust these fields based on RexturAdvance API documentation
-      origem: origin,
-      destino: destination,
-      dataIda: departureDate,
-      dataVolta: returnDate || null,
-      adultos: adults,
-      classe: cabinClass === 'ECONOMY' ? 'Y' : cabinClass === 'BUSINESS' ? 'C' : 'F',
+    // Step 1: Authenticate with Travellink API
+    const authPayload = {
+      Login: API_LOGIN,
+      Senha: API_PASSWORD,
     };
 
-    const response = await fetch(`${REXTUR_API_URL}/v1/flights/search`, {
+    console.log('Authenticating with Travellink API...');
+    const authResponse = await fetch(`${TRAVELLINK_BASE_URL}/Autenticar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(authPayload),
+    });
+
+    if (!authResponse.ok) {
+      const errText = await authResponse.text();
+      console.error(`Travellink auth error [${authResponse.status}]:`, errText);
+      throw new Error(`Travellink auth failed: ${authResponse.status}`);
+    }
+
+    const authData = await authResponse.json();
+    console.log('Auth response keys:', Object.keys(authData));
+
+    // Extract token/session from auth response
+    const token = authData?.Token || authData?.Sessao || authData?.SessionId || authData?.token;
+    
+    if (!token) {
+      console.warn('Auth response (no token found):', JSON.stringify(authData).substring(0, 500));
+      // Try without token - some endpoints may work with login/password directly
+    }
+
+    // Step 2: Search for flights (Disponibilidade)
+    const classeMap: Record<string, string> = {
+      'ECONOMY': 'Y', 'BUSINESS': 'C', 'FIRST': 'F', 'ALL': '',
+    };
+
+    // Format date from YYYY-MM-DD to DD/MM/YYYY (Brazilian format)
+    const [year, month, day] = departureDate.split('-');
+    const formattedDate = `${day}/${month}/${year}`;
+    const formattedReturnDate = returnDate 
+      ? (() => { const [y, m, d] = returnDate.split('-'); return `${d}/${m}/${y}`; })()
+      : null;
+
+    const searchPayload: Record<string, any> = {
+      Login: API_LOGIN,
+      Senha: API_PASSWORD,
+      Origem: origin,
+      Destino: destination,
+      DataIda: formattedDate,
+      Adultos: adults,
+      Criancas: 0,
+      Bebes: 0,
+      Classe: classeMap[cabinClass] || 'Y',
+      TipoBusca: 'OW', // One Way
+    };
+
+    if (formattedReturnDate) {
+      searchPayload.DataVolta = formattedReturnDate;
+      searchPayload.TipoBusca = 'RT'; // Round Trip
+    }
+
+    if (token) {
+      searchPayload.Token = token;
+    }
+
+    console.log('Searching flights with payload:', JSON.stringify(searchPayload));
+
+    const searchResponse = await fetch(`${TRAVELLINK_BASE_URL}/Disponibilidade`, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${authToken}`,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(searchPayload),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`RexturAdvance API error [${response.status}]:`, errorText);
-      throw new Error(`RexturAdvance API error: ${response.status}`);
+    if (!searchResponse.ok) {
+      const errText = await searchResponse.text();
+      console.error(`Travellink search error [${searchResponse.status}]:`, errText);
+      throw new Error(`Travellink search failed: ${searchResponse.status}`);
     }
 
-    const rexturData = await response.json();
-    
-    // ============================================================
-    // TRANSFORM RESPONSE
-    // ============================================================
-    // Adjust this transformation based on the actual RexturAdvance
-    // API response format
-    // ============================================================
-    
-    const flights: FlightOffer[] = transformRexturResponse(rexturData, origin, destination);
+    const searchData = await searchResponse.json();
+    console.log('Search response keys:', Object.keys(searchData));
+    console.log('Search response preview:', JSON.stringify(searchData).substring(0, 1000));
+
+    // Step 3: Transform results
+    const flights = transformTravellinkResponse(searchData, origin, destination);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         flights,
-        source: 'rexturadvance',
+        source: 'travellink',
         searchedAt: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -146,10 +170,10 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Flight search error:', error);
-    
+
     return new Response(
-      JSON.stringify({ 
-        success: false, 
+      JSON.stringify({
+        success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
         flights: [],
       }),
@@ -158,86 +182,55 @@ serve(async (req) => {
   }
 });
 
-// ============================================================
-// TRANSFORM FUNCTION
-// ============================================================
-// This function needs to be adjusted based on the actual
-// RexturAdvance API response structure
-// ============================================================
-function transformRexturResponse(
-  data: any, 
-  origin: string, 
-  destination: string
-): FlightOffer[] {
-  // Example transformation - adjust based on actual API response
-  // Assuming RexturAdvance returns something like:
-  // { voos: [{ cia, numero, partida, chegada, preco, ... }] }
-  
-  if (!data || !data.voos || !Array.isArray(data.voos)) {
-    console.warn('Unexpected RexturAdvance response format:', data);
+function transformTravellinkResponse(data: any, origin: string, destination: string): FlightOffer[] {
+  // Try multiple possible response formats from Travellink
+  const flights = data?.Voos || data?.voos || data?.Opcoes || data?.opcoes 
+    || data?.Resultados || data?.resultados || data?.Disponibilidades || [];
+
+  if (!Array.isArray(flights) || flights.length === 0) {
+    console.warn('No flights array found. Response structure:', JSON.stringify(data).substring(0, 500));
     return [];
   }
 
-  return data.voos.map((voo: any, index: number) => {
-    const airlineCode = voo.cia || voo.companhia || 'XX';
-    
+  return flights.map((voo: any, index: number) => {
+    const airlineCode = voo.Cia || voo.cia || voo.Companhia || voo.companhia || 'XX';
+    const segments = voo.Trechos || voo.trechos || voo.Segmentos || voo.segmentos || [];
+    const stops = segments.length > 1 ? segments.length - 1 : (voo.Paradas || voo.paradas || 0);
+
     return {
-      id: `rextur-${index}-${Date.now()}`,
-      airline: voo.nomeCompanhia || getAirlineName(airlineCode),
+      id: `tl-${index}-${Date.now()}`,
+      airline: voo.NomeCompanhia || voo.nomeCompanhia || airlineNames[airlineCode] || airlineCode,
       airlineLogo: airlineLogos[airlineCode] || '✈️',
-      flightNumber: `${airlineCode}${voo.numero || voo.voo || '000'}`,
-      origin: voo.origem || origin,
-      originCity: voo.cidadeOrigem || origin,
-      destination: voo.destino || destination,
-      destinationCity: voo.cidadeDestino || destination,
-      departureTime: formatTime(voo.partida || voo.horarioPartida),
-      arrivalTime: formatTime(voo.chegada || voo.horarioChegada),
-      duration: voo.duracao || calculateDuration(voo.partida, voo.chegada),
-      cabinClass: voo.classe || 'Econômica',
-      price: parseFloat(voo.preco || voo.valor || voo.tarifa || '0'),
+      flightNumber: `${airlineCode}${voo.Numero || voo.numero || voo.Voo || voo.voo || '000'}`,
+      origin: voo.Origem || voo.origem || origin,
+      originCity: voo.CidadeOrigem || voo.cidadeOrigem || origin,
+      destination: voo.Destino || voo.destino || destination,
+      destinationCity: voo.CidadeDestino || voo.cidadeDestino || destination,
+      departureTime: formatTime(voo.Partida || voo.partida || voo.HorarioPartida || voo.horarioPartida),
+      arrivalTime: formatTime(voo.Chegada || voo.chegada || voo.HorarioChegada || voo.horarioChegada),
+      duration: voo.Duracao || voo.duracao || calculateDuration(voo.Partida || voo.partida, voo.Chegada || voo.chegada),
+      cabinClass: mapCabinClass(voo.Classe || voo.classe || 'Y'),
+      price: parseFloat(voo.Preco || voo.preco || voo.Valor || voo.valor || voo.Tarifa || voo.tarifa || '0'),
       currency: 'BRL',
-      stops: voo.paradas || voo.escalas || 0,
-      segments: voo.trechos?.map((trecho: any) => ({
-        departure: trecho.origem,
-        arrival: trecho.destino,
-        departureTime: formatTime(trecho.partida),
-        arrivalTime: formatTime(trecho.chegada),
-        flightNumber: `${trecho.cia}${trecho.numero}`,
-        airline: getAirlineName(trecho.cia),
-        duration: trecho.duracao,
-      })),
+      stops,
     };
   });
 }
 
-function getAirlineName(code: string): string {
-  const airlines: Record<string, string> = {
-    'LA': 'LATAM',
-    'G3': 'GOL',
-    'AD': 'Azul',
-    'AV': 'Avianca',
-    'AA': 'American Airlines',
-    'UA': 'United',
-    'DL': 'Delta',
-  };
-  return airlines[code] || code;
+function mapCabinClass(code: string): string {
+  const map: Record<string, string> = { 'Y': 'Econômica', 'C': 'Executiva', 'F': 'Primeira Classe' };
+  return map[code] || code;
 }
 
 function formatTime(time: string | undefined): string {
   if (!time) return '00:00';
-  // Handle different time formats
-  if (time.includes('T')) {
-    return time.split('T')[1]?.substring(0, 5) || '00:00';
-  }
-  if (time.includes(':')) {
-    return time.substring(0, 5);
-  }
+  if (time.includes('T')) return time.split('T')[1]?.substring(0, 5) || '00:00';
+  if (time.includes(':')) return time.substring(0, 5);
   return time;
 }
 
 function calculateDuration(departure: string | undefined, arrival: string | undefined): string {
   if (!departure || !arrival) return '0h 0min';
-  
   try {
     const dep = new Date(departure);
     const arr = new Date(arrival);
