@@ -41,6 +41,11 @@ export default function FlightBooking() {
   const [searching, setSearching] = useState(false);
   const [booking, setBooking] = useState<string | null>(null);
 
+  // Passenger form state
+  const [passengerDialogOpen, setPassengerDialogOpen] = useState(false);
+  const [pendingBooking, setPendingBooking] = useState<{ flight: Flight; legIndex: number } | null>(null);
+  const [bookingLoading, setBookingLoading] = useState(false);
+
   const handleTripTypeChange = (value: string) => {
     const type = value as TripType;
     setTripType(type);
