@@ -18,7 +18,34 @@ interface BookingDetailDialogProps {
 }
 
 export default function BookingDetailDialog({ booking, open, onOpenChange }: BookingDetailDialogProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
   if (!booking) return null;
+
+  const handlePrint = () => {
+    const content = contentRef.current;
+    if (!content) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    const typeLabel = booking.booking_type === 'flight' ? 'Passagem Aérea' : booking.booking_type === 'hotel' ? 'Hospedagem' : 'Aluguel de Carro';
+    printWindow.document.write(`
+      <html><head><title>Reserva - ${typeLabel}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 40px; color: #333; max-width: 600px; margin: 0 auto; }
+        h1 { font-size: 20px; margin-bottom: 4px; }
+        h2 { font-size: 14px; text-transform: uppercase; color: #888; margin: 24px 0 8px; letter-spacing: 0.5px; }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .row { display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
+        .row-label { font-size: 12px; color: #888; }
+        .row-value { font-size: 14px; font-weight: 500; }
+        hr { border: none; border-top: 1px solid #e0e0e0; margin: 8px 0; }
+        @media print { body { padding: 20px; } }
+      </style></head><body>
+    `);
+    printWindow.document.write(content.innerHTML);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+  };
 
   const getBookingIcon = (type: string) => {
     switch (type) {
