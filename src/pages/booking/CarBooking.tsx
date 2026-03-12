@@ -148,6 +148,7 @@ export default function CarBooking() {
     setPendingCar(null);
 
     if (error) {
+      console.error('Booking error:', error.message);
       toast({
         variant: 'destructive',
         title: 'Erro ao reservar',
