@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateMockHotels, getCitySuggestions } from '@/data/mockHotels';
 import { Hotel as HotelType } from '@/types/booking';
 import { Hotel, Search, Star, MapPin, Wifi, Coffee, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
+import PassengerFormDialog, { PassengerData } from '@/components/booking/PassengerFormDialog';
 
 const HOTEL_POLICY_LIMIT = 510; // R$ por diária
 
