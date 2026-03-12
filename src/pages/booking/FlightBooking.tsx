@@ -323,6 +323,14 @@ export default function FlightBooking() {
             })}
           </>
         )}
+
+        <PassengerFormDialog
+          open={passengerDialogOpen}
+          onClose={() => { setPassengerDialogOpen(false); setPendingBooking(null); }}
+          onConfirm={handleConfirmBooking}
+          loading={bookingLoading}
+          title="Dados do Passageiro"
+        />
       </div>
     </DashboardLayout>
   );
