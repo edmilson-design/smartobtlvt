@@ -1,23 +1,11 @@
 import { Flight } from '@/types/booking';
+import { brazilianAirports, searchAirports } from './brazilianAirports';
 
 const airlines = [
   { name: 'LATAM', logo: '🔴' },
   { name: 'GOL', logo: '🟠' },
   { name: 'Azul', logo: '🔵' },
   { name: 'Avianca', logo: '🔴' },
-];
-
-const airports = [
-  { code: 'GRU', city: 'São Paulo' },
-  { code: 'GIG', city: 'Rio de Janeiro' },
-  { code: 'BSB', city: 'Brasília' },
-  { code: 'SSA', city: 'Salvador' },
-  { code: 'CNF', city: 'Belo Horizonte' },
-  { code: 'POA', city: 'Porto Alegre' },
-  { code: 'REC', city: 'Recife' },
-  { code: 'FOR', city: 'Fortaleza' },
-  { code: 'CWB', city: 'Curitiba' },
-  { code: 'FLN', city: 'Florianópolis' },
 ];
 
 const cabinClasses = ['Econômica', 'Executiva', 'Primeira Classe'];
@@ -46,8 +34,8 @@ function calculateArrivalTime(depHours: number, depMinutes: number, durationMinu
 }
 
 export function generateMockFlights(origin: string, destination: string, date: string): Flight[] {
-  const originAirport = airports.find(a => a.code === origin || a.city.toLowerCase() === origin.toLowerCase());
-  const destAirport = airports.find(a => a.code === destination || a.city.toLowerCase() === destination.toLowerCase());
+  const originAirport = brazilianAirports.find(a => a.code === origin || a.city.toLowerCase() === origin.toLowerCase());
+  const destAirport = brazilianAirports.find(a => a.code === destination || a.city.toLowerCase() === destination.toLowerCase());
 
   if (!originAirport || !destAirport) {
     return [];
@@ -89,10 +77,6 @@ export function generateMockFlights(origin: string, destination: string, date: s
   return flights.sort((a, b) => a.price - b.price);
 }
 
-export function getAirportSuggestions(query: string): typeof airports {
-  const normalizedQuery = query.toLowerCase();
-  return airports.filter(
-    a => a.code.toLowerCase().includes(normalizedQuery) || 
-         a.city.toLowerCase().includes(normalizedQuery)
-  );
+export function getAirportSuggestions(query: string): Array<{ code: string; city: string }> {
+  return searchAirports(query, 8).map(a => ({ code: a.code, city: `${a.city} (${a.state})` }));
 }
