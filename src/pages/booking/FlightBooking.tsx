@@ -11,7 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { generateMockFlights, getAirportSuggestions } from '@/data/mockFlights';
 import { Flight } from '@/types/booking';
-import { Plane, Search, Clock, ArrowRight, Loader2 } from 'lucide-react';
+import { Plane, Search, Clock, ArrowRight, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+
+const FLIGHT_POLICY_LIMIT = 750; // R$ por trecho
 
 export default function FlightBooking() {
   const { user } = useAuth();
