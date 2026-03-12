@@ -1,132 +1,152 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { generateMockFlights, getAirportSuggestions } from '@/data/mockFlights';
+import { generateMockFlights } from '@/data/mockFlights';
 import { Flight } from '@/types/booking';
-import { Plane, Search, Clock, ArrowRight, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Plane, Search, Loader2, Plus } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import FlightLegForm, { FlightLeg } from '@/components/booking/FlightLegForm';
+import FlightResultCard from '@/components/booking/FlightResultCard';
 
-const FLIGHT_POLICY_LIMIT = 750; // R$ por trecho
+type TripType = 'oneway' | 'roundtrip' | 'multicity';
+
+const createLeg = (overrides?: Partial<FlightLeg>): FlightLeg => ({
+  id: crypto.randomUUID(),
+  origin: '',
+  destination: '',
+  date: '',
+  ...overrides,
+});
 
 export default function FlightBooking() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [origin, setOrigin] = useState('');
-  const [destination, setDestination] = useState('');
-  const [departureDate, setDepartureDate] = useState('');
+  const [tripType, setTripType] = useState<TripType>('oneway');
+  const [legs, setLegs] = useState<FlightLeg[]>([createLeg()]);
   const [cabinClass, setCabinClass] = useState('Econômica');
   const [passengers, setPassengers] = useState('1');
-  
-  const [flights, setFlights] = useState<Flight[]>([]);
+
+  // Results per leg index
+  const [resultsByLeg, setResultsByLeg] = useState<Record<number, Flight[]>>({});
   const [searching, setSearching] = useState(false);
   const [booking, setBooking] = useState<string | null>(null);
 
-  const [originSuggestions, setOriginSuggestions] = useState<Array<{code: string, city: string}>>([]);
-  const [destSuggestions, setDestSuggestions] = useState<Array<{code: string, city: string}>>([]);
+  const handleTripTypeChange = (value: string) => {
+    const type = value as TripType;
+    setTripType(type);
+    setResultsByLeg({});
 
-  const handleOriginChange = (value: string) => {
-    setOrigin(value);
-    if (value.length >= 2) {
-      setOriginSuggestions(getAirportSuggestions(value));
+    if (type === 'oneway') {
+      setLegs([createLeg({ origin: legs[0]?.origin, destination: legs[0]?.destination, date: legs[0]?.date })]);
+    } else if (type === 'roundtrip') {
+      const first = legs[0] || createLeg();
+      setLegs([
+        createLeg({ origin: first.origin, destination: first.destination, date: first.date }),
+        createLeg({ origin: first.destination, destination: first.origin }),
+      ]);
     } else {
-      setOriginSuggestions([]);
+      if (legs.length < 2) {
+        setLegs([...legs, createLeg()]);
+      }
     }
   };
 
-  const handleDestinationChange = (value: string) => {
-    setDestination(value);
-    if (value.length >= 2) {
-      setDestSuggestions(getAirportSuggestions(value));
-    } else {
-      setDestSuggestions([]);
-    }
+  const updateLeg = useCallback((id: string, field: keyof Omit<FlightLeg, 'id'>, value: string) => {
+    setLegs(prev => {
+      const updated = prev.map(l => l.id === id ? { ...l, [field]: value } : l);
+      // For round-trip, sync return leg origin/destination
+      if (prev.length === 2 && prev[0].id === id) {
+        if (field === 'origin') updated[1] = { ...updated[1], destination: value };
+        if (field === 'destination') updated[1] = { ...updated[1], origin: value };
+      }
+      return updated;
+    });
+  }, []);
+
+  const addLeg = () => {
+    if (legs.length >= 6) return;
+    const lastLeg = legs[legs.length - 1];
+    setLegs(prev => [...prev, createLeg({ origin: lastLeg?.destination || '' })]);
+  };
+
+  const removeLeg = (id: string) => {
+    if (legs.length <= 2) return;
+    setLegs(prev => prev.filter(l => l.id !== id));
   };
 
   const handleSearch = async () => {
-    if (!origin || !destination || !departureDate) {
-      toast({
-        variant: 'destructive',
-        title: 'Campos obrigatórios',
-        description: 'Preencha origem, destino e data de partida',
-      });
-      return;
+    // Validate all legs
+    for (let i = 0; i < legs.length; i++) {
+      const leg = legs[i];
+      if (!leg.origin || !leg.destination || !leg.date) {
+        toast({
+          variant: 'destructive',
+          title: 'Campos obrigatórios',
+          description: `Preencha todos os campos do trecho ${i + 1}`,
+        });
+        return;
+      }
     }
 
     setSearching(true);
-    
+    const allResults: Record<number, Flight[]> = {};
+
     try {
-      // Try real API first
-      const { data, error } = await supabase.functions.invoke('search-flights', {
-        body: {
-          origin,
-          destination,
-          departureDate,
-          adults: parseInt(passengers),
-          cabinClass: cabinClass === 'Econômica' ? 'ECONOMY' : cabinClass === 'Executiva' ? 'BUSINESS' : 'ALL',
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.success && data?.flights?.length > 0) {
-        // Use real API results
-        const filtered = cabinClass === 'Todas' 
-          ? data.flights 
-          : data.flights.filter((f: Flight) => f.cabinClass === cabinClass);
-        
-        setFlights(filtered);
-        
-        toast({
-          title: 'Resultados reais',
-          description: `${filtered.length} voos encontrados via RexturAdvance`,
-        });
-      } else {
-        // Fallback to mock data
-        console.warn('Falling back to mock data:', data?.error);
-        const results = generateMockFlights(origin, destination, departureDate);
-        const filtered = cabinClass === 'Todas' 
-          ? results 
-          : results.filter(f => f.cabinClass === cabinClass);
-        
-        setFlights(filtered);
-        
-        if (filtered.length === 0) {
-          toast({
-            title: 'Nenhum voo encontrado',
-            description: 'Tente alterar os filtros de busca',
+      for (let i = 0; i < legs.length; i++) {
+        const leg = legs[i];
+        try {
+          const { data, error } = await supabase.functions.invoke('search-flights', {
+            body: {
+              origin: leg.origin,
+              destination: leg.destination,
+              departureDate: leg.date,
+              adults: parseInt(passengers),
+              cabinClass: cabinClass === 'Econômica' ? 'ECONOMY' : cabinClass === 'Executiva' ? 'BUSINESS' : 'ALL',
+            },
           });
+
+          if (!error && data?.success && data?.flights?.length > 0) {
+            const filtered = cabinClass === 'Todas'
+              ? data.flights
+              : data.flights.filter((f: Flight) => f.cabinClass === cabinClass);
+            allResults[i] = filtered;
+          } else {
+            throw new Error('fallback');
+          }
+        } catch {
+          const results = generateMockFlights(leg.origin, leg.destination, leg.date);
+          const filtered = cabinClass === 'Todas'
+            ? results
+            : results.filter(f => f.cabinClass === cabinClass);
+          allResults[i] = filtered;
         }
       }
-    } catch (err) {
-      console.error('Search error:', err);
-      // Fallback to mock data on error
-      const results = generateMockFlights(origin, destination, departureDate);
-      const filtered = cabinClass === 'Todas' 
-        ? results 
-        : results.filter(f => f.cabinClass === cabinClass);
-      
-      setFlights(filtered);
+
+      setResultsByLeg(allResults);
+
+      const totalFlights = Object.values(allResults).reduce((sum, r) => sum + r.length, 0);
+      if (totalFlights === 0) {
+        toast({ title: 'Nenhum voo encontrado', description: 'Tente alterar os filtros de busca' });
+      }
     } finally {
       setSearching(false);
     }
   };
 
-  const handleBookFlight = async (flight: Flight) => {
+  const handleBookFlight = async (flight: Flight, legIndex: number) => {
     if (!user) return;
 
     setBooking(flight.id);
 
-    // Get user's approval limit
     const { data: profile } = await supabase
       .from('profiles')
       .select('approval_limit')
@@ -135,6 +155,7 @@ export default function FlightBooking() {
 
     const approvalLimit = profile?.approval_limit || 1000;
     const requiresApproval = flight.price > approvalLimit;
+    const leg = legs[legIndex];
 
     const { error } = await supabase
       .from('bookings')
@@ -144,7 +165,7 @@ export default function FlightBooking() {
         status: requiresApproval ? 'pending' : 'confirmed',
         origin: flight.origin,
         destination: flight.destination,
-        start_date: departureDate,
+        start_date: leg.date,
         total_cost: flight.price,
         currency: 'BRL',
         airline: flight.airline,
@@ -154,26 +175,25 @@ export default function FlightBooking() {
         cabin_class: flight.cabinClass,
         requires_approval: requiresApproval,
         confirmation_code: requiresApproval ? null : `LVT${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
+        notes: legs.length > 1 ? `Trecho ${legIndex + 1} de ${legs.length}` : null,
       });
 
     setBooking(null);
 
     if (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao reservar',
-        description: error.message,
-      });
+      toast({ variant: 'destructive', title: 'Erro ao reservar', description: error.message });
     } else {
       toast({
         title: requiresApproval ? 'Reserva enviada para aprovação' : 'Voo reservado com sucesso!',
-        description: requiresApproval 
+        description: requiresApproval
           ? `Valor acima de R$ ${approvalLimit.toLocaleString('pt-BR')} requer aprovação do gestor`
           : 'Você receberá a confirmação por email',
       });
       navigate('/my-bookings');
     }
   };
+
+  const today = new Date().toISOString().split('T')[0];
 
   return (
     <DashboardLayout>
@@ -191,75 +211,41 @@ export default function FlightBooking() {
         {/* Search Form */}
         <Card>
           <CardHeader>
-            <CardTitle>Pesquisar Voos</CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <CardTitle>Pesquisar Voos</CardTitle>
+              <Tabs value={tripType} onValueChange={handleTripTypeChange}>
+                <TabsList>
+                  <TabsTrigger value="oneway">Somente ida</TabsTrigger>
+                  <TabsTrigger value="roundtrip">Ida e volta</TabsTrigger>
+                  <TabsTrigger value="multicity">Múltiplos trechos</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-              <div className="space-y-2 relative">
-                <Label htmlFor="origin">Origem</Label>
-                <Input
-                  id="origin"
-                  placeholder="Ex: GRU ou São Paulo"
-                  value={origin}
-                  onChange={(e) => handleOriginChange(e.target.value)}
-                />
-                {originSuggestions.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-card border rounded-md shadow-lg">
-                    {originSuggestions.map((s) => (
-                      <button
-                        key={s.code}
-                        className="w-full px-3 py-2 text-left hover:bg-secondary text-sm"
-                        onClick={() => {
-                          setOrigin(s.code);
-                          setOriginSuggestions([]);
-                        }}
-                      >
-                        {s.code} - {s.city}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+          <CardContent className="space-y-4">
+            {legs.map((leg, index) => (
+              <FlightLegForm
+                key={leg.id}
+                leg={leg}
+                index={index}
+                totalLegs={legs.length}
+                showRemove={tripType === 'multicity' && legs.length > 2}
+                onUpdate={updateLeg}
+                onRemove={removeLeg}
+                minDate={index > 0 ? (legs[index - 1]?.date || today) : today}
+              />
+            ))}
 
-              <div className="space-y-2 relative">
-                <Label htmlFor="destination">Destino</Label>
-                <Input
-                  id="destination"
-                  placeholder="Ex: GIG ou Rio de Janeiro"
-                  value={destination}
-                  onChange={(e) => handleDestinationChange(e.target.value)}
-                />
-                {destSuggestions.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-card border rounded-md shadow-lg">
-                    {destSuggestions.map((s) => (
-                      <button
-                        key={s.code}
-                        className="w-full px-3 py-2 text-left hover:bg-secondary text-sm"
-                        onClick={() => {
-                          setDestination(s.code);
-                          setDestSuggestions([]);
-                        }}
-                      >
-                        {s.code} - {s.city}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+            {tripType === 'multicity' && legs.length < 6 && (
+              <Button variant="outline" size="sm" onClick={addLeg}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar trecho
+              </Button>
+            )}
 
-              <div className="space-y-2">
-                <Label htmlFor="date">Data de Partida</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={departureDate}
-                  onChange={(e) => setDepartureDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="class">Classe</Label>
+            <div className="flex flex-col sm:flex-row gap-4 items-end pt-2 border-t">
+              <div className="space-y-2 w-full sm:w-48">
+                <Label>Classe</Label>
                 <Select value={cabinClass} onValueChange={setCabinClass}>
                   <SelectTrigger>
                     <SelectValue />
@@ -272,98 +258,49 @@ export default function FlightBooking() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>&nbsp;</Label>
-                <Button className="w-full" onClick={handleSearch} disabled={searching}>
-                  {searching ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Search className="h-4 w-4 mr-2" />
-                  )}
-                  Buscar
-                </Button>
-              </div>
+              <Button onClick={handleSearch} disabled={searching} className="w-full sm:w-auto">
+                {searching ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Search className="h-4 w-4 mr-2" />
+                )}
+                Buscar {legs.length > 1 ? `${legs.length} trechos` : ''}
+              </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Results */}
-        {flights.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Voos Disponíveis</CardTitle>
-              <CardDescription>{flights.length} opções encontradas</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {flights.map((flight) => (
-                <div
-                  key={flight.id}
-                  className="flex flex-col lg:flex-row lg:items-center justify-between p-4 border rounded-lg hover:border-primary transition-colors"
-                >
-                  <div className="flex items-center gap-4 mb-4 lg:mb-0">
-                    <div className="text-3xl">{flight.airlineLogo}</div>
-                    <div>
-                      <p className="font-medium">{flight.airline}</p>
-                      <p className="text-sm text-muted-foreground">{flight.flightNumber}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-8 mb-4 lg:mb-0">
-                    <div className="text-center">
-                      <p className="text-xl font-bold">{flight.departureTime}</p>
-                      <p className="text-sm text-muted-foreground">{flight.origin}</p>
-                    </div>
-
-                    <div className="flex flex-col items-center">
-                      <p className="text-xs text-muted-foreground">{flight.duration}</p>
-                      <div className="flex items-center gap-1">
-                        <div className="h-px w-12 bg-border" />
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                        <div className="h-px w-12 bg-border" />
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {flight.stops === 0 ? 'Direto' : `${flight.stops} parada(s)`}
-                      </p>
-                    </div>
-
-                    <div className="text-center">
-                      <p className="text-xl font-bold">{flight.arrivalTime}</p>
-                      <p className="text-sm text-muted-foreground">{flight.destination}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between lg:flex-col lg:items-end gap-2">
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">{flight.cabinClass}</p>
-                      <p className="text-2xl font-bold text-primary">
-                        R$ {flight.price.toLocaleString('pt-BR')}
-                      </p>
-                      {flight.price <= FLIGHT_POLICY_LIMIT ? (
-                        <Badge variant="outline" className="mt-1 text-xs border-green-500 text-green-600 bg-green-50 dark:bg-green-950/30">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Dentro da política
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="mt-1 text-xs border-orange-500 text-orange-600 bg-orange-50 dark:bg-orange-950/30">
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          Fora da política
-                        </Badge>
-                      )}
-                    </div>
-                    <Button 
-                      onClick={() => handleBookFlight(flight)}
-                      disabled={booking === flight.id}
-                    >
-                      {booking === flight.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : null}
-                      Reservar
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+        {/* Results per leg */}
+        {Object.keys(resultsByLeg).length > 0 && (
+          <>
+            {Object.entries(resultsByLeg).map(([legIdx, flights]) => {
+              const idx = parseInt(legIdx);
+              const leg = legs[idx];
+              return (
+                <Card key={legIdx}>
+                  <CardHeader>
+                    <CardTitle>
+                      {legs.length > 1 
+                        ? `Trecho ${idx + 1}: ${leg?.origin} → ${leg?.destination}`
+                        : 'Voos Disponíveis'
+                      }
+                    </CardTitle>
+                    <CardDescription>{flights.length} opções encontradas</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {flights.map((flight) => (
+                      <FlightResultCard
+                        key={flight.id}
+                        flight={flight}
+                        isBooking={booking === flight.id}
+                        onBook={(f) => handleBookFlight(f, idx)}
+                      />
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </>
         )}
       </div>
     </DashboardLayout>
