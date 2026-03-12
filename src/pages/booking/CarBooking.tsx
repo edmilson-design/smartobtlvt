@@ -151,7 +151,7 @@ export default function CarBooking() {
       toast({
         variant: 'destructive',
         title: 'Erro ao reservar',
-        description: error.message,
+        description: 'Ocorreu um erro ao processar sua reserva. Tente novamente.',
       });
     } else {
       toast({

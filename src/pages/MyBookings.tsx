@@ -61,7 +61,7 @@ export default function MyBookings() {
       toast({
         variant: 'destructive',
         title: 'Erro ao cancelar',
-        description: error.message,
+        description: 'Ocorreu um erro ao cancelar a reserva. Tente novamente.',
       });
     } else {
       toast({

@@ -60,7 +60,7 @@ export default function ProfilePage() {
       toast({
         variant: 'destructive',
         title: 'Erro ao salvar',
-        description: error.message,
+        description: 'Ocorreu um erro ao salvar seu perfil. Tente novamente.',
       });
     } else {
       toast({

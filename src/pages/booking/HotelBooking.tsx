@@ -132,7 +132,7 @@ export default function HotelBooking() {
       toast({
         variant: 'destructive',
         title: 'Erro ao reservar',
-        description: error.message,
+        description: 'Ocorreu um erro ao processar sua reserva. Tente novamente.',
       });
     } else {
       toast({
