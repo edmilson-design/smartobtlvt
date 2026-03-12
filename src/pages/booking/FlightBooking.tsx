@@ -148,9 +148,16 @@ export default function FlightBooking() {
     }
   };
 
-  const handleBookFlight = async (flight: Flight, legIndex: number) => {
-    if (!user) return;
+  const handleRequestBook = (flight: Flight, legIndex: number) => {
+    setPendingBooking({ flight, legIndex });
+    setPassengerDialogOpen(true);
+  };
 
+  const handleConfirmBooking = async (passenger: PassengerData) => {
+    if (!user || !pendingBooking) return;
+
+    const { flight, legIndex } = pendingBooking;
+    setBookingLoading(true);
     setBooking(flight.id);
 
     const { data: profile } = await supabase
@@ -182,9 +189,17 @@ export default function FlightBooking() {
         requires_approval: requiresApproval,
         confirmation_code: requiresApproval ? null : `LVT${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
         notes: legs.length > 1 ? `Trecho ${legIndex + 1} de ${legs.length}` : null,
+        passenger_first_name: passenger.firstName,
+        passenger_last_name: passenger.lastName,
+        passenger_email: passenger.email,
+        passenger_phone: passenger.phone,
+        passenger_cpf: passenger.cpf,
       });
 
+    setBookingLoading(false);
     setBooking(null);
+    setPassengerDialogOpen(false);
+    setPendingBooking(null);
 
     if (error) {
       toast({ variant: 'destructive', title: 'Erro ao reservar', description: error.message });
