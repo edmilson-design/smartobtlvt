@@ -283,6 +283,17 @@ export default function HotelBooking() {
                         <p className="text-xs text-muted-foreground">
                           R$ {hotel.pricePerNight.toLocaleString('pt-BR')} / noite
                         </p>
+                        {hotel.pricePerNight <= HOTEL_POLICY_LIMIT ? (
+                          <Badge variant="outline" className="mt-1 text-xs border-green-500 text-green-600 bg-green-50 dark:bg-green-950/30">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Dentro da política
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="mt-1 text-xs border-orange-500 text-orange-600 bg-orange-50 dark:bg-orange-950/30">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Fora da política
+                          </Badge>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-primary">
