@@ -378,6 +378,14 @@ export default function CarBooking() {
             </div>
           </div>
         )}
+
+        <PassengerFormDialog
+          open={passengerDialogOpen}
+          onClose={() => { setPassengerDialogOpen(false); setPendingCar(null); }}
+          onConfirm={handleConfirmBooking}
+          loading={bookingLoading}
+          title="Dados do Locatário"
+        />
       </div>
     </DashboardLayout>
   );
