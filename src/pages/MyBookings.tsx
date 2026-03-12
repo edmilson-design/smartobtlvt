@@ -20,6 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Booking } from '@/types/booking';
 import { ClipboardList, Plane, Hotel, Car, Trash2, Loader2, Calendar, MapPin, DollarSign } from 'lucide-react';
+import BookingDetailDialog from '@/components/booking/BookingDetailDialog';
 
 export default function MyBookings() {
   const { user } = useAuth();
