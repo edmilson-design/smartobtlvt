@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Booking } from '@/types/booking';
 import {
   Dialog,
@@ -7,7 +8,8 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Plane, Hotel, Car, Calendar, DollarSign, MapPin, User, Phone, Mail, CreditCard, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Plane, Hotel, Car, Calendar, DollarSign, MapPin, User, Phone, Mail, CreditCard, Clock, Printer } from 'lucide-react';
 
 interface BookingDetailDialogProps {
   booking: Booking | null;
