@@ -202,6 +202,49 @@ export default function BookingDetailDialog({ booking, open, onOpenChange }: Boo
             <InfoRow icon={CreditCard} label="Código de Confirmação" value={booking.confirmation_code || undefined} />
           </div>
 
+          {/* Penalties - only for flights */}
+          {booking.booking_type === 'flight' && (
+            <div className="space-y-1 mt-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Multas e Penalidades</h3>
+              <Separator />
+              {(() => {
+                const penalties = (booking.airline && airlinePenalties[booking.airline]) || defaultPenalties;
+                return (
+                  <>
+                    <div className="flex items-start gap-3 py-2">
+                      <Ban className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Cancelamento</p>
+                        <p className="text-sm font-medium">{penalties.cancelamento}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 py-2">
+                      <RefreshCw className="h-4 w-4 mt-0.5 text-orange-500 shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Remarcação</p>
+                        <p className="text-sm font-medium">{penalties.remarcacao}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 py-2">
+                      <Route className="h-4 w-4 mt-0.5 text-blue-500 shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Reitineração</p>
+                        <p className="text-sm font-medium">{penalties.reitineracao}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 py-2">
+                      <RotateCcw className="h-4 w-4 mt-0.5 text-green-600 shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Reembolso</p>
+                        <p className="text-sm font-medium">{penalties.reembolso}</p>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+
           {/* Passenger Info */}
           {(booking.passenger_first_name || booking.passenger_email || booking.passenger_cpf || booking.passenger_phone) && (
             <div className="space-y-1 mt-4">
