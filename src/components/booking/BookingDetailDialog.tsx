@@ -206,8 +206,3 @@ export default function BookingDetailDialog({ booking, open, onOpenChange }: Boo
     </Dialog>
   );
 }
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
