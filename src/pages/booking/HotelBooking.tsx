@@ -11,7 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { generateMockHotels, getCitySuggestions } from '@/data/mockHotels';
 import { Hotel as HotelType } from '@/types/booking';
-import { Hotel, Search, Star, MapPin, Wifi, Coffee, Loader2 } from 'lucide-react';
+import { Hotel, Search, Star, MapPin, Wifi, Coffee, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
+
+const HOTEL_POLICY_LIMIT = 510; // R$ por diária
 
 export default function HotelBooking() {
   const { user } = useAuth();
