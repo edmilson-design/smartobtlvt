@@ -11,7 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { generateMockHotels, getCitySuggestions } from '@/data/mockHotels';
 import { Hotel as HotelType } from '@/types/booking';
-import { Hotel, Search, Star, MapPin, Wifi, Coffee, Loader2 } from 'lucide-react';
+import { Hotel, Search, Star, MapPin, Wifi, Coffee, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
+
+const HOTEL_POLICY_LIMIT = 510; // R$ por diária
 
 export default function HotelBooking() {
   const { user } = useAuth();
@@ -281,6 +283,17 @@ export default function HotelBooking() {
                         <p className="text-xs text-muted-foreground">
                           R$ {hotel.pricePerNight.toLocaleString('pt-BR')} / noite
                         </p>
+                        {hotel.pricePerNight <= HOTEL_POLICY_LIMIT ? (
+                          <Badge variant="outline" className="mt-1 text-xs border-green-500 text-green-600 bg-green-50 dark:bg-green-950/30">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Dentro da política
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="mt-1 text-xs border-orange-500 text-orange-600 bg-orange-50 dark:bg-orange-950/30">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Fora da política
+                          </Badge>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-primary">

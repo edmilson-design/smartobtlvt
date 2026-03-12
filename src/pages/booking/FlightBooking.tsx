@@ -11,7 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { generateMockFlights, getAirportSuggestions } from '@/data/mockFlights';
 import { Flight } from '@/types/booking';
-import { Plane, Search, Clock, ArrowRight, Loader2 } from 'lucide-react';
+import { Plane, Search, Clock, ArrowRight, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+
+const FLIGHT_POLICY_LIMIT = 750; // R$ por trecho
 
 export default function FlightBooking() {
   const { user } = useAuth();
@@ -335,6 +338,17 @@ export default function FlightBooking() {
                       <p className="text-2xl font-bold text-primary">
                         R$ {flight.price.toLocaleString('pt-BR')}
                       </p>
+                      {flight.price <= FLIGHT_POLICY_LIMIT ? (
+                        <Badge variant="outline" className="mt-1 text-xs border-green-500 text-green-600 bg-green-50 dark:bg-green-950/30">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Dentro da política
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="mt-1 text-xs border-orange-500 text-orange-600 bg-orange-50 dark:bg-orange-950/30">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Fora da política
+                        </Badge>
+                      )}
                     </div>
                     <Button 
                       onClick={() => handleBookFlight(flight)}
