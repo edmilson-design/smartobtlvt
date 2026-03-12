@@ -30,6 +30,10 @@ export default function HotelBooking() {
   const [searching, setSearching] = useState(false);
   const [booking, setBooking] = useState<string | null>(null);
 
+  const [passengerDialogOpen, setPassengerDialogOpen] = useState(false);
+  const [pendingHotel, setPendingHotel] = useState<HotelType | null>(null);
+  const [bookingLoading, setBookingLoading] = useState(false);
+
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
 
   const handleCityChange = (value: string) => {
