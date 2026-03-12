@@ -20,6 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Booking } from '@/types/booking';
 import { ClipboardList, Plane, Hotel, Car, Trash2, Loader2, Calendar, MapPin, DollarSign } from 'lucide-react';
+import BookingDetailDialog from '@/components/booking/BookingDetailDialog';
 
 export default function MyBookings() {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ export default function MyBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     loadBookings();
@@ -156,7 +158,7 @@ export default function MyBookings() {
     bookings.filter(b => status.includes(b.status));
 
   const BookingCard = ({ booking }: { booking: Booking }) => (
-    <Card key={booking.id} className="overflow-hidden">
+    <Card key={booking.id} className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedBooking(booking)}>
       <CardContent className="p-0">
         <div className="flex flex-col md:flex-row">
           {/* Icon and Type */}
@@ -321,6 +323,12 @@ export default function MyBookings() {
             </TabsContent>
           </Tabs>
         )}
+
+        <BookingDetailDialog
+          booking={selectedBooking}
+          open={!!selectedBooking}
+          onOpenChange={(open) => { if (!open) setSelectedBooking(null); }}
+        />
       </div>
     </DashboardLayout>
   );
