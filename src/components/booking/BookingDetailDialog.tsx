@@ -9,7 +9,42 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Plane, Hotel, Car, Calendar, DollarSign, MapPin, User, Phone, Mail, CreditCard, Clock, Printer } from 'lucide-react';
+import { Plane, Hotel, Car, Calendar, DollarSign, MapPin, User, Phone, Mail, CreditCard, Clock, Printer, Ban, RefreshCw, Route, RotateCcw } from 'lucide-react';
+
+interface PenaltyInfo {
+  cancelamento: string;
+  remarcacao: string;
+  reitineracao: string;
+  reembolso: string;
+}
+
+const airlinePenalties: Record<string, PenaltyInfo> = {
+  'LATAM': {
+    cancelamento: 'R$ 400,00 (econômica) / R$ 250,00 (executiva)',
+    remarcacao: 'R$ 300,00 + diferença tarifária',
+    reitineracao: 'R$ 350,00 + diferença tarifária',
+    reembolso: 'Valor pago menos multa de R$ 400,00 (em até 7 dias úteis)',
+  },
+  'GOL': {
+    cancelamento: 'R$ 350,00 (econômica) / R$ 200,00 (executiva)',
+    remarcacao: 'R$ 250,00 + diferença tarifária',
+    reitineracao: 'R$ 300,00 + diferença tarifária',
+    reembolso: 'Valor pago menos multa de R$ 350,00 (em até 7 dias úteis)',
+  },
+  'Azul': {
+    cancelamento: 'R$ 380,00 (econômica) / R$ 220,00 (executiva)',
+    remarcacao: 'R$ 280,00 + diferença tarifária',
+    reitineracao: 'R$ 320,00 + diferença tarifária',
+    reembolso: 'Valor pago menos multa de R$ 380,00 (em até 7 dias úteis)',
+  },
+};
+
+const defaultPenalties: PenaltyInfo = {
+  cancelamento: 'R$ 400,00 + diferença tarifária (se aplicável)',
+  remarcacao: 'R$ 300,00 + diferença tarifária',
+  reitineracao: 'R$ 350,00 + diferença tarifária',
+  reembolso: 'Valor pago menos multa aplicável (em até 7 dias úteis)',
+};
 
 interface BookingDetailDialogProps {
   booking: Booking | null;
