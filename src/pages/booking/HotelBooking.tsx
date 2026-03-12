@@ -325,7 +325,7 @@ export default function HotelBooking() {
 
                     <Button 
                       className="w-full mt-4" 
-                      onClick={() => handleBookHotel(hotel)}
+                      onClick={() => handleRequestBookHotel(hotel)}
                       disabled={booking === hotel.id}
                     >
                       {booking === hotel.id ? (
