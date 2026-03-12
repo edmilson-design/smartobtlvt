@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateMockFlights } from '@/data/mockFlights';
 import { Flight } from '@/types/booking';
 import { Plane, Search, Loader2, Plus } from 'lucide-react';
+import PassengerFormDialog, { PassengerData } from '@/components/booking/PassengerFormDialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import FlightLegForm, { FlightLeg } from '@/components/booking/FlightLegForm';
 import FlightResultCard from '@/components/booking/FlightResultCard';
