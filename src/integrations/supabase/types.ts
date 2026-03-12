@@ -38,6 +38,11 @@ export type Database = {
           id: string
           notes: string | null
           origin: string | null
+          passenger_cpf: string | null
+          passenger_email: string | null
+          passenger_first_name: string | null
+          passenger_last_name: string | null
+          passenger_phone: string | null
           pickup_location: string | null
           rejection_reason: string | null
           requires_approval: boolean | null
@@ -71,6 +76,11 @@ export type Database = {
           id?: string
           notes?: string | null
           origin?: string | null
+          passenger_cpf?: string | null
+          passenger_email?: string | null
+          passenger_first_name?: string | null
+          passenger_last_name?: string | null
+          passenger_phone?: string | null
           pickup_location?: string | null
           rejection_reason?: string | null
           requires_approval?: boolean | null
@@ -104,6 +114,11 @@ export type Database = {
           id?: string
           notes?: string | null
           origin?: string | null
+          passenger_cpf?: string | null
+          passenger_email?: string | null
+          passenger_first_name?: string | null
+          passenger_last_name?: string | null
+          passenger_phone?: string | null
           pickup_location?: string | null
           rejection_reason?: string | null
           requires_approval?: boolean | null
