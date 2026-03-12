@@ -34,8 +34,8 @@ function calculateArrivalTime(depHours: number, depMinutes: number, durationMinu
 }
 
 export function generateMockFlights(origin: string, destination: string, date: string): Flight[] {
-  const originAirport = airports.find(a => a.code === origin || a.city.toLowerCase() === origin.toLowerCase());
-  const destAirport = airports.find(a => a.code === destination || a.city.toLowerCase() === destination.toLowerCase());
+  const originAirport = brazilianAirports.find(a => a.code === origin || a.city.toLowerCase() === origin.toLowerCase());
+  const destAirport = brazilianAirports.find(a => a.code === destination || a.city.toLowerCase() === destination.toLowerCase());
 
   if (!originAirport || !destAirport) {
     return [];
