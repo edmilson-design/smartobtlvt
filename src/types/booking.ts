@@ -79,6 +79,11 @@ export interface Booking {
   rejection_reason?: string;
   confirmation_code?: string;
   notes?: string;
+  passenger_first_name?: string;
+  passenger_last_name?: string;
+  passenger_email?: string;
+  passenger_phone?: string;
+  passenger_cpf?: string;
 }
 
 export interface Profile {
