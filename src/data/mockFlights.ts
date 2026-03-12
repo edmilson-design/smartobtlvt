@@ -1,23 +1,11 @@
 import { Flight } from '@/types/booking';
+import { brazilianAirports, searchAirports } from './brazilianAirports';
 
 const airlines = [
   { name: 'LATAM', logo: '🔴' },
   { name: 'GOL', logo: '🟠' },
   { name: 'Azul', logo: '🔵' },
   { name: 'Avianca', logo: '🔴' },
-];
-
-const airports = [
-  { code: 'GRU', city: 'São Paulo' },
-  { code: 'GIG', city: 'Rio de Janeiro' },
-  { code: 'BSB', city: 'Brasília' },
-  { code: 'SSA', city: 'Salvador' },
-  { code: 'CNF', city: 'Belo Horizonte' },
-  { code: 'POA', city: 'Porto Alegre' },
-  { code: 'REC', city: 'Recife' },
-  { code: 'FOR', city: 'Fortaleza' },
-  { code: 'CWB', city: 'Curitiba' },
-  { code: 'FLN', city: 'Florianópolis' },
 ];
 
 const cabinClasses = ['Econômica', 'Executiva', 'Primeira Classe'];
