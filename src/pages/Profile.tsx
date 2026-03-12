@@ -57,10 +57,11 @@ export default function ProfilePage() {
     setSaving(false);
 
     if (error) {
+      console.error('Profile update error:', error.message);
       toast({
         variant: 'destructive',
         title: 'Erro ao salvar',
-        description: error.message,
+        description: 'Ocorreu um erro ao salvar seu perfil. Tente novamente.',
       });
     } else {
       toast({

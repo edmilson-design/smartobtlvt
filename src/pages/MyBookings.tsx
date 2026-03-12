@@ -58,10 +58,11 @@ export default function MyBookings() {
       .eq('id', bookingId);
 
     if (error) {
+      console.error('Delete booking error:', error.message);
       toast({
         variant: 'destructive',
         title: 'Erro ao cancelar',
-        description: error.message,
+        description: 'Ocorreu um erro ao cancelar a reserva. Tente novamente.',
       });
     } else {
       toast({
