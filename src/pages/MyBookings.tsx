@@ -158,7 +158,7 @@ export default function MyBookings() {
     bookings.filter(b => status.includes(b.status));
 
   const BookingCard = ({ booking }: { booking: Booking }) => (
-    <Card key={booking.id} className="overflow-hidden">
+    <Card key={booking.id} className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedBooking(booking)}>
       <CardContent className="p-0">
         <div className="flex flex-col md:flex-row">
           {/* Icon and Type */}
