@@ -77,10 +77,6 @@ export function generateMockFlights(origin: string, destination: string, date: s
   return flights.sort((a, b) => a.price - b.price);
 }
 
-export function getAirportSuggestions(query: string): typeof airports {
-  const normalizedQuery = query.toLowerCase();
-  return airports.filter(
-    a => a.code.toLowerCase().includes(normalizedQuery) || 
-         a.city.toLowerCase().includes(normalizedQuery)
-  );
+export function getAirportSuggestions(query: string): Array<{ code: string; city: string }> {
+  return searchAirports(query, 8).map(a => ({ code: a.code, city: `${a.city} (${a.state})` }));
 }
