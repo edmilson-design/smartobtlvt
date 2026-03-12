@@ -364,7 +364,7 @@ export default function CarBooking() {
 
                     <Button 
                       className="w-full mt-4" 
-                      onClick={() => handleBookCar(car)}
+                      onClick={() => handleRequestBookCar(car)}
                       disabled={booking === car.id}
                     >
                       {booking === car.id ? (
