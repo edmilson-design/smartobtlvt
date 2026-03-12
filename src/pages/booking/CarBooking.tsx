@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateMockCars, getLocationSuggestions } from '@/data/mockCars';
 import { CarRental } from '@/types/booking';
 import { Car, Search, Users, Briefcase, Snowflake, Loader2 } from 'lucide-react';
+import PassengerFormDialog, { PassengerData } from '@/components/booking/PassengerFormDialog';
 
 export default function CarBooking() {
   const { user } = useAuth();
@@ -27,6 +28,10 @@ export default function CarBooking() {
   const [cars, setCars] = useState<CarRental[]>([]);
   const [searching, setSearching] = useState(false);
   const [booking, setBooking] = useState<string | null>(null);
+
+  const [passengerDialogOpen, setPassengerDialogOpen] = useState(false);
+  const [pendingCar, setPendingCar] = useState<CarRental | null>(null);
+  const [bookingLoading, setBookingLoading] = useState(false);
 
   const [pickupSuggestions, setPickupSuggestions] = useState<string[]>([]);
   const [dropoffSuggestions, setDropoffSuggestions] = useState<string[]>([]);
@@ -92,9 +97,16 @@ export default function CarBooking() {
     }, 1500);
   };
 
-  const handleBookCar = async (car: CarRental) => {
-    if (!user) return;
+  const handleRequestBookCar = (car: CarRental) => {
+    setPendingCar(car);
+    setPassengerDialogOpen(true);
+  };
 
+  const handleConfirmBooking = async (passenger: PassengerData) => {
+    if (!user || !pendingCar) return;
+    const car = pendingCar;
+
+    setBookingLoading(true);
     setBooking(car.id);
 
     const { data: profile } = await supabase
@@ -123,9 +135,17 @@ export default function CarBooking() {
         dropoff_location: car.dropoffLocation,
         requires_approval: requiresApproval,
         confirmation_code: requiresApproval ? null : `LVT${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
+        passenger_first_name: passenger.firstName,
+        passenger_last_name: passenger.lastName,
+        passenger_email: passenger.email,
+        passenger_phone: passenger.phone,
+        passenger_cpf: passenger.cpf,
       });
 
+    setBookingLoading(false);
     setBooking(null);
+    setPassengerDialogOpen(false);
+    setPendingCar(null);
 
     if (error) {
       toast({
@@ -344,7 +364,7 @@ export default function CarBooking() {
 
                     <Button 
                       className="w-full mt-4" 
-                      onClick={() => handleBookCar(car)}
+                      onClick={() => handleRequestBookCar(car)}
                       disabled={booking === car.id}
                     >
                       {booking === car.id ? (
@@ -358,6 +378,14 @@ export default function CarBooking() {
             </div>
           </div>
         )}
+
+        <PassengerFormDialog
+          open={passengerDialogOpen}
+          onClose={() => { setPassengerDialogOpen(false); setPendingCar(null); }}
+          onConfirm={handleConfirmBooking}
+          loading={bookingLoading}
+          title="Dados do Locatário"
+        />
       </div>
     </DashboardLayout>
   );

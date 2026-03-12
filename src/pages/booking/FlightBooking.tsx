@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateMockFlights } from '@/data/mockFlights';
 import { Flight } from '@/types/booking';
 import { Plane, Search, Loader2, Plus } from 'lucide-react';
+import PassengerFormDialog, { PassengerData } from '@/components/booking/PassengerFormDialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import FlightLegForm, { FlightLeg } from '@/components/booking/FlightLegForm';
 import FlightResultCard from '@/components/booking/FlightResultCard';
@@ -39,6 +40,11 @@ export default function FlightBooking() {
   const [resultsByLeg, setResultsByLeg] = useState<Record<number, Flight[]>>({});
   const [searching, setSearching] = useState(false);
   const [booking, setBooking] = useState<string | null>(null);
+
+  // Passenger form state
+  const [passengerDialogOpen, setPassengerDialogOpen] = useState(false);
+  const [pendingBooking, setPendingBooking] = useState<{ flight: Flight; legIndex: number } | null>(null);
+  const [bookingLoading, setBookingLoading] = useState(false);
 
   const handleTripTypeChange = (value: string) => {
     const type = value as TripType;
@@ -142,9 +148,16 @@ export default function FlightBooking() {
     }
   };
 
-  const handleBookFlight = async (flight: Flight, legIndex: number) => {
-    if (!user) return;
+  const handleRequestBook = (flight: Flight, legIndex: number) => {
+    setPendingBooking({ flight, legIndex });
+    setPassengerDialogOpen(true);
+  };
 
+  const handleConfirmBooking = async (passenger: PassengerData) => {
+    if (!user || !pendingBooking) return;
+
+    const { flight, legIndex } = pendingBooking;
+    setBookingLoading(true);
     setBooking(flight.id);
 
     const { data: profile } = await supabase
@@ -176,9 +189,17 @@ export default function FlightBooking() {
         requires_approval: requiresApproval,
         confirmation_code: requiresApproval ? null : `LVT${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
         notes: legs.length > 1 ? `Trecho ${legIndex + 1} de ${legs.length}` : null,
+        passenger_first_name: passenger.firstName,
+        passenger_last_name: passenger.lastName,
+        passenger_email: passenger.email,
+        passenger_phone: passenger.phone,
+        passenger_cpf: passenger.cpf,
       });
 
+    setBookingLoading(false);
     setBooking(null);
+    setPassengerDialogOpen(false);
+    setPendingBooking(null);
 
     if (error) {
       toast({ variant: 'destructive', title: 'Erro ao reservar', description: error.message });
@@ -293,7 +314,7 @@ export default function FlightBooking() {
                         key={flight.id}
                         flight={flight}
                         isBooking={booking === flight.id}
-                        onBook={(f) => handleBookFlight(f, idx)}
+                        onBook={(f) => handleRequestBook(f, idx)}
                       />
                     ))}
                   </CardContent>
@@ -302,6 +323,14 @@ export default function FlightBooking() {
             })}
           </>
         )}
+
+        <PassengerFormDialog
+          open={passengerDialogOpen}
+          onClose={() => { setPassengerDialogOpen(false); setPendingBooking(null); }}
+          onConfirm={handleConfirmBooking}
+          loading={bookingLoading}
+          title="Dados do Passageiro"
+        />
       </div>
     </DashboardLayout>
   );
