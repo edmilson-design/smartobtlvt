@@ -339,6 +339,14 @@ export default function HotelBooking() {
             </div>
           </div>
         )}
+
+        <PassengerFormDialog
+          open={passengerDialogOpen}
+          onClose={() => { setPassengerDialogOpen(false); setPendingHotel(null); }}
+          onConfirm={handleConfirmBooking}
+          loading={bookingLoading}
+          title="Dados do Hóspede"
+        />
       </div>
     </DashboardLayout>
   );
