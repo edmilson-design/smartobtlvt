@@ -29,6 +29,10 @@ export default function CarBooking() {
   const [searching, setSearching] = useState(false);
   const [booking, setBooking] = useState<string | null>(null);
 
+  const [passengerDialogOpen, setPassengerDialogOpen] = useState(false);
+  const [pendingCar, setPendingCar] = useState<CarRental | null>(null);
+  const [bookingLoading, setBookingLoading] = useState(false);
+
   const [pickupSuggestions, setPickupSuggestions] = useState<string[]>([]);
   const [dropoffSuggestions, setDropoffSuggestions] = useState<string[]>([]);
 
