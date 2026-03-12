@@ -104,19 +104,24 @@ export default function BookingDetailDialog({ booking, open, onOpenChange }: Boo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              {getBookingIcon(booking.booking_type)}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                {getBookingIcon(booking.booking_type)}
+              </div>
+              <div>
+                <DialogTitle>{getBookingTypeLabel(booking.booking_type)}</DialogTitle>
+                <div className="mt-1">{getStatusBadge(booking.status)}</div>
+              </div>
             </div>
-            <div>
-              <DialogTitle>{getBookingTypeLabel(booking.booking_type)}</DialogTitle>
-              <div className="mt-1">{getStatusBadge(booking.status)}</div>
-            </div>
+            <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2">
+              <Printer className="h-4 w-4" />
+              Imprimir
+            </Button>
           </div>
         </DialogHeader>
 
-        {/* Booking Details */}
-        <div className="space-y-1">
+        <div ref={contentRef}>
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Detalhes da Reserva</h3>
           <Separator />
 
