@@ -80,9 +80,16 @@ export default function HotelBooking() {
     }, 1500);
   };
 
-  const handleBookHotel = async (hotel: HotelType) => {
-    if (!user) return;
+  const handleRequestBookHotel = (hotel: HotelType) => {
+    setPendingHotel(hotel);
+    setPassengerDialogOpen(true);
+  };
 
+  const handleConfirmBooking = async (passenger: PassengerData) => {
+    if (!user || !pendingHotel) return;
+    const hotel = pendingHotel;
+
+    setBookingLoading(true);
     setBooking(hotel.id);
 
     const { data: profile } = await supabase
@@ -109,9 +116,17 @@ export default function HotelBooking() {
         room_type: hotel.roomType,
         requires_approval: requiresApproval,
         confirmation_code: requiresApproval ? null : `LVT${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
+        passenger_first_name: passenger.firstName,
+        passenger_last_name: passenger.lastName,
+        passenger_email: passenger.email,
+        passenger_phone: passenger.phone,
+        passenger_cpf: passenger.cpf,
       });
 
+    setBookingLoading(false);
     setBooking(null);
+    setPassengerDialogOpen(false);
+    setPendingHotel(null);
 
     if (error) {
       toast({
