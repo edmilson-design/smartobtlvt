@@ -314,7 +314,7 @@ export default function FlightBooking() {
                         key={flight.id}
                         flight={flight}
                         isBooking={booking === flight.id}
-                        onBook={(f) => handleBookFlight(f, idx)}
+                        onBook={(f) => handleRequestBook(f, idx)}
                       />
                     ))}
                   </CardContent>
