@@ -323,6 +323,12 @@ export default function MyBookings() {
             </TabsContent>
           </Tabs>
         )}
+
+        <BookingDetailDialog
+          booking={selectedBooking}
+          open={!!selectedBooking}
+          onOpenChange={(open) => { if (!open) setSelectedBooking(null); }}
+        />
       </div>
     </DashboardLayout>
   );
