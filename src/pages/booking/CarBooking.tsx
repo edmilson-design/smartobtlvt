@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateMockCars, getLocationSuggestions } from '@/data/mockCars';
 import { CarRental } from '@/types/booking';
 import { Car, Search, Users, Briefcase, Snowflake, Loader2 } from 'lucide-react';
+import PassengerFormDialog, { PassengerData } from '@/components/booking/PassengerFormDialog';
 
 export default function CarBooking() {
   const { user } = useAuth();
