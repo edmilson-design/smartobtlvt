@@ -157,6 +157,29 @@ export default function PassengerFormDialog({ open, onClose, onConfirm, loading,
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="pax-cost-center">Centro de Custos</Label>
+              <Input
+                id="pax-cost-center"
+                placeholder="Ex: CC-001"
+                value={data.costCenter}
+                onChange={(e) => setData(d => ({ ...d, costCenter: e.target.value }))}
+                maxLength={50}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pax-project">Projeto</Label>
+              <Input
+                id="pax-project"
+                placeholder="Ex: Projeto Alpha"
+                value={data.project}
+                onChange={(e) => setData(d => ({ ...d, project: e.target.value }))}
+                maxLength={100}
+              />
+            </div>
+          </div>
+
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancelar
