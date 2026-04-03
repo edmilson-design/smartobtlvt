@@ -140,6 +140,8 @@ export default function CarBooking() {
         passenger_email: passenger.email,
         passenger_phone: passenger.phone,
         passenger_cpf: passenger.cpf,
+        cost_center: passenger.costCenter || null,
+        project: passenger.project || null,
       });
 
     setBookingLoading(false);
