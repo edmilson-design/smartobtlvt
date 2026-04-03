@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_steps: {
+        Row: {
+          approver_id: string
+          booking_id: string
+          comments: string | null
+          created_at: string
+          decided_at: string | null
+          id: string
+          status: string
+          step_order: number
+          updated_at: string
+        }
+        Insert: {
+          approver_id: string
+          booking_id: string
+          comments?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          status?: string
+          step_order?: number
+          updated_at?: string
+        }
+        Update: {
+          approver_id?: string
+          booking_id?: string
+          comments?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          status?: string
+          step_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_steps_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           airline: string | null
@@ -27,6 +71,7 @@ export type Database = {
           check_in_time: string | null
           check_out_time: string | null
           confirmation_code: string | null
+          cost_center: string | null
           created_at: string
           currency: string | null
           departure_time: string | null
@@ -44,6 +89,7 @@ export type Database = {
           passenger_last_name: string | null
           passenger_phone: string | null
           pickup_location: string | null
+          project: string | null
           rejection_reason: string | null
           requires_approval: boolean | null
           room_type: string | null
@@ -65,6 +111,7 @@ export type Database = {
           check_in_time?: string | null
           check_out_time?: string | null
           confirmation_code?: string | null
+          cost_center?: string | null
           created_at?: string
           currency?: string | null
           departure_time?: string | null
@@ -82,6 +129,7 @@ export type Database = {
           passenger_last_name?: string | null
           passenger_phone?: string | null
           pickup_location?: string | null
+          project?: string | null
           rejection_reason?: string | null
           requires_approval?: boolean | null
           room_type?: string | null
@@ -103,6 +151,7 @@ export type Database = {
           check_in_time?: string | null
           check_out_time?: string | null
           confirmation_code?: string | null
+          cost_center?: string | null
           created_at?: string
           currency?: string | null
           departure_time?: string | null
@@ -120,6 +169,7 @@ export type Database = {
           passenger_last_name?: string | null
           passenger_phone?: string | null
           pickup_location?: string | null
+          project?: string | null
           rejection_reason?: string | null
           requires_approval?: boolean | null
           room_type?: string | null
