@@ -16,6 +16,7 @@ import HotelBooking from "./pages/booking/HotelBooking";
 import CarBooking from "./pages/booking/CarBooking";
 import MyBookings from "./pages/MyBookings";
 import Profile from "./pages/Profile";
+import Approvals from "./pages/Approvals";
 
 const queryClient = new QueryClient();
 
