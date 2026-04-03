@@ -84,6 +84,20 @@ export interface Booking {
   passenger_email?: string;
   passenger_phone?: string;
   passenger_cpf?: string;
+  cost_center?: string;
+  project?: string;
+}
+
+export interface ApprovalStep {
+  id: string;
+  booking_id: string;
+  step_order: number;
+  approver_id: string;
+  status: string;
+  decided_at?: string;
+  comments?: string;
+  created_at: string;
+  approver_name?: string;
 }
 
 export interface Profile {
