@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { 
@@ -13,7 +14,8 @@ import {
   LogOut,
   Menu,
   ChevronDown,
-  User
+  User,
+  ShieldCheck
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,7 +30,7 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-const navItems = [
+const baseNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/booking/flights', label: 'Passagens', icon: Plane },
   { href: '/booking/hotels', label: 'Hotéis', icon: Hotel },
@@ -41,6 +43,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isManagerOrAdmin, setIsManagerOrAdmin] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      supabase.rpc('is_manager_or_admin').then(({ data }) => {
+        setIsManagerOrAdmin(!!data);
+      });
+    }
+  }, [user]);
+
+  const navItems = [
+    ...baseNavItems,
+    ...(isManagerOrAdmin ? [{ href: '/approvals', label: 'Aprovações', icon: ShieldCheck }] : []),
+  ];
 
   const handleSignOut = async () => {
     await signOut();
