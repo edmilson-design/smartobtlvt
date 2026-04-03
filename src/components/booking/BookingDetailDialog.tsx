@@ -1,5 +1,6 @@
-import { useRef } from 'react';
-import { Booking } from '@/types/booking';
+import { useRef, useEffect, useState } from 'react';
+import { Booking, ApprovalStep } from '@/types/booking';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Plane, Hotel, Car, Calendar, DollarSign, MapPin, User, Phone, Mail, CreditCard, Clock, Printer, Ban, RefreshCw, Route, RotateCcw } from 'lucide-react';
+import { Plane, Hotel, Car, Calendar, DollarSign, MapPin, User, Phone, Mail, CreditCard, Clock, Printer, Ban, RefreshCw, Route, RotateCcw, Building, FolderKanban, CheckCircle2, XCircle, CircleDot } from 'lucide-react';
 
 interface PenaltyInfo {
   cancelamento: string;
