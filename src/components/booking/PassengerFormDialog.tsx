@@ -11,6 +11,8 @@ export interface PassengerData {
   email: string;
   phone: string;
   cpf: string;
+  costCenter: string;
+  project: string;
 }
 
 interface PassengerFormDialogProps {
