@@ -63,6 +63,8 @@ export default function PassengerFormDialog({ open, onClose, onConfirm, loading,
     email: '',
     phone: '',
     cpf: '',
+    costCenter: '',
+    project: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof PassengerData, string>>>({});
 
