@@ -11,6 +11,8 @@ export interface PassengerData {
   email: string;
   phone: string;
   cpf: string;
+  costCenter: string;
+  project: string;
 }
 
 interface PassengerFormDialogProps {
@@ -61,6 +63,8 @@ export default function PassengerFormDialog({ open, onClose, onConfirm, loading,
     email: '',
     phone: '',
     cpf: '',
+    costCenter: '',
+    project: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof PassengerData, string>>>({});
 
@@ -150,6 +154,29 @@ export default function PassengerFormDialog({ open, onClose, onConfirm, loading,
                 onChange={(e) => setData(d => ({ ...d, cpf: formatCPF(e.target.value) }))}
               />
               {errors.cpf && <p className="text-xs text-destructive">{errors.cpf}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="pax-cost-center">Centro de Custos</Label>
+              <Input
+                id="pax-cost-center"
+                placeholder="Ex: CC-001"
+                value={data.costCenter}
+                onChange={(e) => setData(d => ({ ...d, costCenter: e.target.value }))}
+                maxLength={50}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pax-project">Projeto</Label>
+              <Input
+                id="pax-project"
+                placeholder="Ex: Projeto Alpha"
+                value={data.project}
+                onChange={(e) => setData(d => ({ ...d, project: e.target.value }))}
+                maxLength={100}
+              />
             </div>
           </div>
 

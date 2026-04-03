@@ -1,5 +1,6 @@
-import { useRef } from 'react';
-import { Booking } from '@/types/booking';
+import { useRef, useEffect, useState } from 'react';
+import { Booking, ApprovalStep } from '@/types/booking';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Plane, Hotel, Car, Calendar, DollarSign, MapPin, User, Phone, Mail, CreditCard, Clock, Printer, Ban, RefreshCw, Route, RotateCcw } from 'lucide-react';
+import { Plane, Hotel, Car, Calendar, DollarSign, MapPin, User, Phone, Mail, CreditCard, Clock, Printer, Ban, RefreshCw, Route, RotateCcw, Building, FolderKanban, CheckCircle2, XCircle, CircleDot } from 'lucide-react';
 
 interface PenaltyInfo {
   cancelamento: string;
@@ -54,6 +55,38 @@ interface BookingDetailDialogProps {
 
 export default function BookingDetailDialog({ booking, open, onOpenChange }: BookingDetailDialogProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [approvalSteps, setApprovalSteps] = useState<ApprovalStep[]>([]);
+
+  useEffect(() => {
+    if (booking?.requires_approval && open) {
+      loadApprovalSteps(booking.id);
+    } else {
+      setApprovalSteps([]);
+    }
+  }, [booking, open]);
+
+  const loadApprovalSteps = async (bookingId: string) => {
+    const { data } = await supabase
+      .from('approval_steps')
+      .select('*')
+      .eq('booking_id', bookingId)
+      .order('step_order', { ascending: true });
+    
+    if (data && data.length > 0) {
+      // Load approver names
+      const approverIds = data.map((s: any) => s.approver_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', approverIds);
+      
+      const nameMap = new Map((profiles || []).map((p: any) => [p.id, p.full_name]));
+      setApprovalSteps(data.map((s: any) => ({ ...s, approver_name: nameMap.get(s.approver_id) || 'Aprovador' })));
+    } else {
+      setApprovalSteps([]);
+    }
+  };
+
   if (!booking) return null;
 
   const handlePrint = () => {
@@ -201,6 +234,49 @@ export default function BookingDetailDialog({ booking, open, onOpenChange }: Boo
             />
             <InfoRow icon={CreditCard} label="Código de Confirmação" value={booking.confirmation_code || undefined} />
           </div>
+
+          {/* Cost Center & Project */}
+          {(booking.cost_center || booking.project) && (
+            <div className="space-y-1 mt-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Informações Corporativas</h3>
+              <Separator />
+              <InfoRow icon={Building} label="Centro de Custos" value={booking.cost_center || undefined} />
+              <InfoRow icon={FolderKanban} label="Projeto" value={booking.project || undefined} />
+            </div>
+          )}
+
+          {/* Approval Steps */}
+          {approvalSteps.length > 0 && (
+            <div className="space-y-1 mt-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Fluxo de Aprovação</h3>
+              <Separator />
+              <div className="space-y-3 py-2">
+                {approvalSteps.map((step, idx) => (
+                  <div key={step.id} className="flex items-start gap-3">
+                    {step.status === 'approved' ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                    ) : step.status === 'rejected' ? (
+                      <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                    ) : (
+                      <CircleDot className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                    )}
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">
+                        Etapa {step.step_order}: {step.approver_name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {step.status === 'approved' ? 'Aprovado' : step.status === 'rejected' ? 'Rejeitado' : 'Pendente'}
+                        {step.decided_at && ` em ${new Date(step.decided_at).toLocaleDateString('pt-BR')}`}
+                      </p>
+                      {step.comments && (
+                        <p className="text-xs mt-1 italic">{step.comments}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Penalties - only for flights */}
           {booking.booking_type === 'flight' && (
