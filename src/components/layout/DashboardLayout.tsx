@@ -43,6 +43,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isManagerOrAdmin, setIsManagerOrAdmin] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      supabase.rpc('is_manager_or_admin').then(({ data }) => {
+        setIsManagerOrAdmin(!!data);
+      });
+    }
+  }, [user]);
+
+  const navItems = [
+    ...baseNavItems,
+    ...(isManagerOrAdmin ? [{ href: '/approvals', label: 'Aprovações', icon: ShieldCheck }] : []),
+  ];
 
   const handleSignOut = async () => {
     await signOut();
