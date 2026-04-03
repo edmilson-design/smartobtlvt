@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { 
@@ -13,7 +14,8 @@ import {
   LogOut,
   Menu,
   ChevronDown,
-  User
+  User,
+  ShieldCheck
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,7 +30,7 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-const navItems = [
+const baseNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/booking/flights', label: 'Passagens', icon: Plane },
   { href: '/booking/hotels', label: 'Hotéis', icon: Hotel },
