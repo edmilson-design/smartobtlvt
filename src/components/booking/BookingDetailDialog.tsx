@@ -55,6 +55,38 @@ interface BookingDetailDialogProps {
 
 export default function BookingDetailDialog({ booking, open, onOpenChange }: BookingDetailDialogProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [approvalSteps, setApprovalSteps] = useState<ApprovalStep[]>([]);
+
+  useEffect(() => {
+    if (booking?.requires_approval && open) {
+      loadApprovalSteps(booking.id);
+    } else {
+      setApprovalSteps([]);
+    }
+  }, [booking, open]);
+
+  const loadApprovalSteps = async (bookingId: string) => {
+    const { data } = await supabase
+      .from('approval_steps')
+      .select('*')
+      .eq('booking_id', bookingId)
+      .order('step_order', { ascending: true });
+    
+    if (data && data.length > 0) {
+      // Load approver names
+      const approverIds = data.map((s: any) => s.approver_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', approverIds);
+      
+      const nameMap = new Map((profiles || []).map((p: any) => [p.id, p.full_name]));
+      setApprovalSteps(data.map((s: any) => ({ ...s, approver_name: nameMap.get(s.approver_id) || 'Aprovador' })));
+    } else {
+      setApprovalSteps([]);
+    }
+  };
+
   if (!booking) return null;
 
   const handlePrint = () => {
