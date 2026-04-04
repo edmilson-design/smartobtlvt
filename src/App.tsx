@@ -17,6 +17,7 @@ import CarBooking from "./pages/booking/CarBooking";
 import MyBookings from "./pages/MyBookings";
 import Profile from "./pages/Profile";
 import Approvals from "./pages/Approvals";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,11 @@ const App = () => (
             <Route path="/approvals" element={
               <ProtectedRoute>
                 <Approvals />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <Admin />
               </ProtectedRoute>
             } />
             

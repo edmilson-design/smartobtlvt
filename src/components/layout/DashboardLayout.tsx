@@ -18,6 +18,9 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import {
+  UserCog
+} from 'lucide-react';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -53,9 +56,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [user]);
 
+  const [isAdminUser, setIsAdminUser] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      supabase.rpc('is_admin').then(({ data }) => {
+        setIsAdminUser(!!data);
+      });
+    }
+  }, [user]);
+
   const navItems = [
     ...baseNavItems,
     ...(isManagerOrAdmin ? [{ href: '/approvals', label: 'Aprovações', icon: ShieldCheck }] : []),
+    ...(isAdminUser ? [{ href: '/admin', label: 'Administração', icon: UserCog }] : []),
   ];
 
   const handleSignOut = async () => {
