@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plane, Hotel, Car, ClipboardList, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { Plane, Hotel, Car, ClipboardList, TrendingUp, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Booking, Profile } from '@/types/booking';
 
 export default function Dashboard() {
