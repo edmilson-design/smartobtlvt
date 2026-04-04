@@ -126,7 +126,7 @@ export default function Admin() {
     const { error: profileError } = await supabase
       .from('profiles')
       .update({
-        manager_id: formManagerId || null,
+        manager_id: formManagerId && formManagerId !== 'none' ? formManagerId : null,
         department: formDepartment || null,
         cost_center: formCostCenter || null,
         approval_limit: Number(formApprovalLimit) || 1000,
