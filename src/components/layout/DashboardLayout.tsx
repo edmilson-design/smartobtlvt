@@ -18,6 +18,9 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import {
+  UserCog
+} from 'lucide-react';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
