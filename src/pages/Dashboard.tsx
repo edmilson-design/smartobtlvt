@@ -52,6 +52,7 @@ export default function Dashboard() {
     total: bookings.length,
     pending: bookings.filter(b => b.status === 'pending').length,
     confirmed: bookings.filter(b => b.status === 'confirmed' || b.status === 'approved').length,
+    rejected: bookings.filter(b => b.status === 'rejected').length,
   };
 
   const quickActions = [
