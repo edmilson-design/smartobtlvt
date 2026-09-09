@@ -68,6 +68,8 @@ export default function Approvals() {
     if (!user) return;
     setLoading(true);
 
+    const collected: ApprovalBooking[] = [];
+
     // Load pending bookings where current user is the next approver
     const { data: pendingSteps } = await supabase
       .from('approval_steps')
@@ -84,7 +86,6 @@ export default function Approvals() {
         .eq('status', 'pending');
 
       if (bookings) {
-        // Get employee profiles
         const userIds = [...new Set(bookings.map((b: any) => b.user_id))];
         const { data: profiles } = await supabase
           .from('profiles')
@@ -94,21 +95,18 @@ export default function Approvals() {
         const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
         const stepMap = new Map(pendingSteps.map((s: any) => [s.booking_id, s]));
 
-        const enriched = bookings.map((b: any) => {
+        bookings.forEach((b: any) => {
           const profile = profileMap.get(b.user_id);
           const step = stepMap.get(b.id);
-          return {
+          collected.push({
             ...b,
             employee_name: profile?.full_name || 'Funcionário',
             employee_email: profile?.email || '',
             approval_step_id: step?.id,
             step_order: step?.step_order,
-          } as ApprovalBooking;
+          } as ApprovalBooking);
         });
-        setPendingBookings(enriched);
       }
-    } else {
-      setPendingBookings([]);
     }
 
     // Also load bookings via manager relationship (without approval_steps)
@@ -119,33 +117,32 @@ export default function Approvals() {
       .eq('requires_approval', true);
 
     if (directBookings && directBookings.length > 0) {
-      // Filter to those where user is manager
       const userIds = [...new Set(directBookings.map((b: any) => b.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name, email, manager_id')
         .in('id', userIds);
 
-      const managedUsers = (profiles || []).filter((p: any) => p.manager_id === user.id);
-      const managedIds = new Set(managedUsers.map((p: any) => p.id));
+      const managedIds = new Set(
+        (profiles || []).filter((p: any) => p.manager_id === user.id).map((p: any) => p.id)
+      );
       const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+      const existingIds = new Set(collected.map((b) => b.id));
 
-      const existingIds = new Set(pendingBookings.map(b => b.id));
-      const additionalBookings = directBookings
+      directBookings
         .filter((b: any) => managedIds.has(b.user_id) && !existingIds.has(b.id))
-        .map((b: any) => {
+        .forEach((b: any) => {
           const profile = profileMap.get(b.user_id);
-          return {
+          collected.push({
             ...b,
             employee_name: profile?.full_name || 'Funcionário',
             employee_email: profile?.email || '',
-          } as ApprovalBooking;
+          } as ApprovalBooking);
         });
-
-      if (additionalBookings.length > 0) {
-        setPendingBookings(prev => [...prev, ...additionalBookings]);
-      }
     }
+
+    setPendingBookings(collected);
+
 
     // Load history (decided steps)
     const { data: decidedSteps } = await supabase
