@@ -251,6 +251,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_manager_approval_stats: {
+        Args: never
+        Returns: {
+          approved: number
+          manager_id: string
+          manager_name: string
+          pending: number
+          rejected: number
+        }[]
+      }
       get_manager_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
