@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Plane, Hotel, Car, ClipboardList, TrendingUp, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Booking, Profile } from '@/types/booking';
+import ManagerStatsCard from '@/components/ManagerStatsCard';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -156,6 +157,8 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        <ManagerStatsCard />
 
         {/* Quick Actions */}
         <Card>

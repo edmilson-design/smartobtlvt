@@ -33,6 +33,8 @@ import {
 import {
   Users, Shield, Loader2, Pencil, Search, UserCog,
 } from 'lucide-react';
+import HierarchyTree from '@/components/admin/HierarchyTree';
+import ManagerStatsCard from '@/components/ManagerStatsCard';
 
 interface UserProfile {
   id: string;
@@ -134,7 +136,14 @@ export default function Admin() {
       .eq('id', editUser.id);
 
     if (profileError) {
-      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível atualizar o perfil.' });
+      const circular = /circular|si mesmo/i.test(profileError.message || '');
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: circular
+          ? 'Esse gestor criaria uma hierarquia circular. Escolha outra pessoa.'
+          : 'Não foi possível atualizar o perfil.',
+      });
       setSaving(false);
       return;
     }
@@ -198,6 +207,9 @@ export default function Admin() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
+          <>
+          <HierarchyTree users={users} />
+          <ManagerStatsCard />
           <Card>
             <CardHeader className="pb-3">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -253,6 +265,7 @@ export default function Admin() {
               </div>
             </CardContent>
           </Card>
+          </>
         )}
       </div>
 
